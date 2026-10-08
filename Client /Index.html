@@ -1,0 +1,30 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NY</title><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#8b2e4a">
+<meta name="apple-mobile-web-app-capable" content="yes"><link rel="apple-touch-icon" href="/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--rg:#e8b4a0;--rgl:#f4c9b8;--rgd:#c99380;--wine:#8b2e4a;--bk:#0a0a0f;--mut:#a0a0b0}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Cairo,Tahoma,sans-serif}
+body{min-height:100vh;background:radial-gradient(ellipse at top,#1a1a2a,var(--bk) 60%);color:#fff;padding:12px;padding-top:max(12px,env(safe-area-inset-top))}
+#app{max-width:520px;margin:auto}button,input,textarea{font:inherit;color:#fff}button{cursor:pointer;border:0}
+input,textarea{width:100%;padding:12px;margin:6px 0;border-radius:12px;border:1px solid #d4a57455;background:#e8b4a014;outline:0}
+.top,.hd,.row{display:flex;justify-content:space-between;align-items:center;gap:8px}.top,.hd{padding:10px 14px;border-radius:14px;background:#14141c99;border:1px solid #d4a57444;margin-bottom:12px;font-size:.85em}
+.hd a{color:var(--rgl);text-decoration:none;font-size:1.3em}.hd b{color:var(--rg)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 8px;font-size:1.8em;text-decoration:none;color:#fff;border-radius:18px;border:1px solid #d4a57444;background:linear-gradient(135deg,var(--wine),#4a2030)}
+.grid a span{font-size:.45em;font-weight:700}
+.card,.card2{background:linear-gradient(135deg,var(--wine),var(--rgd));border-radius:20px;padding:24px 16px;margin-bottom:12px;text-align:center;white-space:pre-line;line-height:1.9;min-height:120px;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.card2{background:#e8b4a014;border:1px solid #d4a57444;text-align:right;align-items:stretch;justify-content:flex-start;padding:14px;min-height:0;white-space:normal;line-height:1.6}
+.card2 p{white-space:pre-wrap;color:#e0e0e0;font-size:.9em}.card2 img{width:48%;margin:6px 1%;border-radius:10px}.card2 small{color:var(--mut)}.card2 small a{color:#d9534f}
+.btn,.btn2{width:100%;padding:14px;border-radius:12px;font-weight:700;margin:4px 0;background:linear-gradient(135deg,var(--wine),var(--rgd))}.btn2{background:#e8b4a01a;color:var(--rgl);border:1px solid #d4a57444}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rx{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.rx button,.mood button{padding:5px 10px;border-radius:16px;background:#e8b4a014;border:1px solid transparent;font-size:1.1em}.rx .on,.mood .on{border-color:var(--rg);background:#e8b4a040}
+.cm{font-size:.82em;background:#8b2e4a33;padding:6px 10px;border-radius:10px;margin:4px 0;border-right:3px solid var(--rgd)}.cm b{color:var(--rg)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0;font-size:.7em;color:var(--mut);text-align:center}.stats b{display:block;color:var(--rg);font-size:1.6em}
+.toast{position:fixed;top:16px;right:16px;left:16px;max-width:360px;margin:auto;padding:12px;border-radius:12px;background:var(--wine);z-index:99;text-align:center}
+.ov{position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;padding:20px;z-index:98}.ov .card{width:100%;max-width:420px}
+.login{text-align:center;padding-top:10vh}.login h1{font-size:4em;letter-spacing:8px;background:linear-gradient(135deg,var(--rgl),#d4a574);-webkit-background-clip:text;color:transparent}
+.code{font-size:2em;letter-spacing:4px;color:var(--rg);margin:14px 0}.empty{text-align:center;color:var(--mut);padding:30px}
+</style></head><body><div id="app"></div>
+<script src="/socket.io/socket.io.js"></script><script src="data.js"></script><script src="app.js"></script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js')</script></body></html>
