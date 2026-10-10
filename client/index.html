@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>NY</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#8b2e4a">
@@ -22,6 +22,10 @@
   --bk: #0a0a0f;
   --mut: #a0a0b0;
   --card-bg: rgba(20, 20, 28, 0.6);
+  --header-h: 60px;
+  --navbar-h: 70px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -36,9 +40,7 @@ body {
   min-height: 100vh;
   background: radial-gradient(ellipse at top, #1a1a2a, var(--bk) 60%);
   color: #fff;
-  padding: 12px;
-  padding-top: max(12px, env(safe-area-inset-top));
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  overflow-x: hidden;
   transition: background 0.5s ease;
 }
 
@@ -52,12 +54,207 @@ body.no-animations * {
   transition: none !important;
 }
 
-#app {
+/* ============ الهيكل الأساسي ============ */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   max-width: 520px;
-  margin: auto;
-  padding-bottom: 80px;
+  margin: 0 auto;
+  position: relative;
 }
 
+/* ============ الشريط العلوي ============ */
+.app-header {
+  position: sticky;
+  top: 0;
+  height: calc(var(--header-h) + var(--safe-top));
+  padding-top: var(--safe-top);
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(212, 165, 116, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 16px;
+  padding-right: 16px;
+  z-index: 100;
+}
+
+body.light-mode .app-header {
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom-color: rgba(139, 46, 74, 0.15);
+}
+
+.header-title {
+  font-family: 'Reem Kufi', serif;
+  font-size: 1.5em;
+  font-weight: 700;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg, var(--rgl), var(--gold), var(--rgd));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-subtitle {
+  font-size: 0.7em;
+  color: var(--mut);
+  letter-spacing: 1px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.header-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(232, 180, 160, 0.1);
+  border: 1px solid rgba(212, 165, 116, 0.25);
+  color: var(--rgl);
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.header-btn:active {
+  transform: scale(0.9);
+  background: rgba(232, 180, 160, 0.25);
+}
+
+/* ============ المحتوى الرئيسي ============ */
+.app-content {
+  flex: 1;
+  padding: 12px;
+  padding-bottom: calc(var(--navbar-h) + var(--safe-bottom) + 12px);
+  overflow-y: auto;
+}
+
+/* ============ الشريط السفلي ============ */
+.app-navbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 520px;
+  height: calc(var(--navbar-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(10, 10, 15, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(212, 165, 116, 0.15);
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  z-index: 200;
+}
+
+body.light-mode .app-navbar {
+  background: rgba(255, 255, 255, 0.95);
+  border-top-color: rgba(139, 46, 74, 0.15);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  color: var(--mut);
+  transition: all 0.3s;
+  position: relative;
+  padding: 8px 4px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+}
+
+.nav-item .nav-icon {
+  font-size: 1.4em;
+  line-height: 1;
+  transition: transform 0.3s;
+}
+
+.nav-item .nav-label {
+  font-size: 0.6em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.nav-item.active {
+  color: var(--rg);
+}
+
+.nav-item.active .nav-icon {
+  transform: scale(1.15) translateY(-2px);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--rgd), var(--rg));
+  border-radius: 0 0 3px 3px;
+}
+
+.nav-item:active .nav-icon {
+  transform: scale(0.9);
+}
+
+/* زر الإضافة المميز */
+.nav-item.add-btn .nav-icon {
+  background: linear-gradient(135deg, var(--wine), var(--rgd));
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3em;
+  box-shadow: 0 4px 15px rgba(139, 46, 74, 0.5);
+  transform: translateY(-8px);
+  border: 2px solid rgba(212, 165, 116, 0.3);
+}
+
+.nav-item.add-btn.active .nav-icon {
+  transform: translateY(-8px) scale(1.1);
+}
+
+/* ============ الشاشة الكاملة (بدون شريط سفلي) ============ */
+.full-screen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at top, #1a1a2a, var(--bk) 60%);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  animation: slideInFromBottom 0.3s ease-out;
+}
+
+@keyframes slideInFromBottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+body.light-mode .full-screen {
+  background: linear-gradient(135deg, #fdf6f2, #f9e8e0);
+}
+
+/* ============ عناصر عامة ============ */
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; border: 0; }
 
@@ -84,29 +281,41 @@ input:focus, textarea:focus {
   gap: 8px;
 }
 
-.top, .hd {
+.hd {
   padding: 12px 16px;
-  border-radius: 16px;
-  background: var(--card-bg);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(212, 165, 116, 0.25);
-  margin-bottom: 12px;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(212, 165, 116, 0.15);
   font-size: 0.9em;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
-.hd a {
+.hd a, .hd button {
   color: var(--rgl);
   text-decoration: none;
   font-size: 1.2em;
   padding: 6px 10px;
   border-radius: 10px;
   background: rgba(232, 180, 160, 0.1);
+  border: 0;
+  cursor: pointer;
 }
 
 .hd b {
   color: var(--rg);
   font-family: 'Reem Kufi', serif;
   letter-spacing: 2px;
+}
+
+.app-logo-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  box-shadow: 0 0 15px rgba(232, 180, 160, 0.4);
+  object-fit: cover;
 }
 
 .app-logo {
@@ -119,87 +328,6 @@ input:focus, textarea:focus {
   display: block;
   margin: 0 auto 12px;
 }
-
-.app-logo-small {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--gold);
-  box-shadow: 0 0 15px rgba(232, 180, 160, 0.4);
-  object-fit: cover;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.grid a {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 20px 8px;
-  font-size: 1.8em;
-  text-decoration: none;
-  color: #fff;
-  border-radius: 18px;
-  border: 1px solid rgba(212, 165, 116, 0.25);
-  background: linear-gradient(135deg, var(--wine), #4a2030);
-  transition: transform 0.3s, box-shadow 0.3s;
-  min-height: 95px;
-  justify-content: center;
-}
-
-.grid a:hover, .grid a:active {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(232, 180, 160, 0.3);
-}
-
-.grid a span { font-size: 0.45em; font-weight: 700; }
-
-.grid-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-}
-
-.sort-btn {
-  padding: 6px 12px;
-  border-radius: 10px;
-  background: rgba(232, 180, 160, 0.1);
-  border: 1px solid rgba(212, 165, 116, 0.25);
-  color: var(--rgl);
-  font-size: 0.8em;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.sort-btn:active { transform: scale(0.95); }
-
-.grid.edit-mode a {
-  cursor: grab;
-  border: 2px dashed var(--gold);
-  animation: wiggle 0.5s infinite;
-}
-
-.grid.edit-mode a:active {
-  cursor: grabbing;
-  transform: scale(1.05);
-  box-shadow: 0 15px 35px rgba(232, 180, 160, 0.5);
-}
-
-@keyframes wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-1deg); }
-  75% { transform: rotate(1deg); }
-}
-
-.sortable-item { user-select: none; }
 
 .card, .card2 {
   background: linear-gradient(135deg, var(--wine), var(--rgd));
@@ -257,34 +385,6 @@ input:focus, textarea:focus {
 
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-.rx { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
-
-.rx button, .mood button {
-  padding: 6px 12px;
-  border-radius: 16px;
-  background: rgba(232, 180, 160, 0.08);
-  border: 1px solid transparent;
-  font-size: 1.1em;
-  transition: all 0.2s;
-}
-
-.rx .on, .mood .on {
-  border-color: var(--rg);
-  background: rgba(232, 180, 160, 0.25);
-  transform: scale(1.05);
-}
-
-.cm {
-  font-size: 0.82em;
-  background: rgba(139, 46, 74, 0.2);
-  padding: 6px 10px;
-  border-radius: 10px;
-  margin: 4px 0;
-  border-right: 3px solid var(--rgd);
-}
-
-.cm b { color: var(--rg); }
-
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -327,7 +427,19 @@ input:focus, textarea:focus {
 
 .ov .card { width: 100%; max-width: 420px; }
 
-.login { text-align: center; padding-top: 8vh; }
+.empty {
+  text-align: center;
+  color: var(--mut);
+  padding: 40px 20px;
+}
+
+.empty-icon { font-size: 3em; opacity: 0.5; margin-bottom: 12px; }
+
+/* ============ شاشة الدخول ============ */
+.login {
+  text-align: center;
+  padding: 10vh 20px 40px;
+}
 
 .login h1 {
   font-family: 'Reem Kufi', serif;
@@ -348,29 +460,21 @@ input:focus, textarea:focus {
   margin-bottom: 30px;
 }
 
-.code {
-  font-family: 'Reem Kufi', serif;
-  font-size: 2em;
-  letter-spacing: 4px;
-  color: var(--rg);
-  margin: 14px 0;
-}
-
-.empty { text-align: center; color: var(--mut); padding: 40px 20px; }
-.empty-icon { font-size: 3em; opacity: 0.5; margin-bottom: 12px; }
-
-.settings-tabs {
+/* ============ التنقل الداخلي ============ */
+.tabs-scroll {
   display: flex;
   gap: 6px;
-  margin-bottom: 16px;
+  padding: 12px;
   overflow-x: auto;
-  padding-bottom: 6px;
   scrollbar-width: none;
+  margin: 0 -12px;
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
-.settings-tabs::-webkit-scrollbar { display: none; }
+.tabs-scroll::-webkit-scrollbar { display: none; }
 
-.settings-tabs button {
+.tabs-scroll button {
   padding: 10px 16px;
   border-radius: 12px;
   background: rgba(232, 180, 160, 0.08);
@@ -382,225 +486,50 @@ input:focus, textarea:focus {
   transition: all 0.3s;
 }
 
-.settings-tabs button.active {
+.tabs-scroll button.active {
   background: linear-gradient(135deg, var(--wine), var(--rgd));
   color: white;
   border-color: var(--rg);
 }
 
-.settings-section { animation: fadeIn 0.3s; }
-
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px;
-  background: rgba(232, 180, 160, 0.06);
-  border-radius: 12px;
-  margin-bottom: 8px;
-  border: 1px solid rgba(212, 165, 116, 0.15);
-}
-
-.setting-item label { color: var(--rgl); font-size: 0.9em; font-weight: 600; }
-.setting-item .value { color: var(--mut); font-size: 0.85em; }
-
-.toggle {
-  position: relative;
-  width: 48px;
-  height: 26px;
-  background: rgba(232, 180, 160, 0.15);
-  border-radius: 13px;
-  transition: background 0.3s;
-  cursor: pointer;
-}
-
-.toggle.on { background: linear-gradient(135deg, var(--wine), var(--rgd)); }
-
-.toggle::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.3s;
-}
-
-.toggle.on::after { transform: translateX(-22px); }
-
-.avatar-grid {
+/* ============ الشبكة الرئيسية ============ */
+.grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 8px;
-  margin: 12px 0;
-}
-
-.avatar-grid button {
-  aspect-ratio: 1;
-  border-radius: 12px;
-  background: rgba(232, 180, 160, 0.08);
-  border: 2px solid transparent;
-  font-size: 1.4em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
-}
-
-.avatar-grid button.selected {
-  border-color: var(--rg);
-  background: rgba(232, 180, 160, 0.25);
-  transform: scale(1.1);
-}
-
-.theme-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin: 12px 0;
 }
 
-.theme-card {
-  padding: 16px;
-  border-radius: 14px;
-  border: 2px solid rgba(212, 165, 116, 0.2);
-  background: rgba(232, 180, 160, 0.06);
-  cursor: pointer;
-  transition: all 0.3s;
-  text-align: center;
-}
-
-.theme-card.selected {
-  border-color: var(--rg);
-  transform: scale(1.02);
-  box-shadow: 0 0 20px rgba(232, 180, 160, 0.3);
-}
-
-.theme-preview {
+.grid a, .grid button {
   display: flex;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.theme-preview span {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.2);
-}
-
-.profile-header { text-align: center; padding: 20px 0; }
-
-.profile-avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  border: 3px solid var(--gold);
-  background: rgba(232, 180, 160, 0.1);
-  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 6px;
+  padding: 16px 6px;
+  font-size: 1.6em;
+  text-decoration: none;
+  color: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(212, 165, 116, 0.25);
+  background: linear-gradient(135deg, var(--wine), #4a2030);
+  transition: transform 0.3s, box-shadow 0.3s;
+  min-height: 80px;
   justify-content: center;
-  font-size: 3em;
-  margin: 0 auto 12px;
-  box-shadow: 0 0 40px rgba(232, 180, 160, 0.4);
-  overflow: hidden;
-}
-
-.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.profile-name {
-  font-size: 1.3em;
-  color: var(--rg);
-  font-family: 'Reem Kufi', serif;
-  margin-bottom: 4px;
-}
-
-.profile-status {
-  color: var(--mut);
-  font-size: 0.85em;
-  font-style: italic;
-}
-
-.settings-fab {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--wine), var(--rgd));
-  color: white;
-  font-size: 1.4em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 25px rgba(139, 46, 74, 0.5);
-  z-index: 50;
-  transition: transform 0.3s;
-  border: 1px solid rgba(212, 165, 116, 0.4);
-}
-
-.settings-fab:active { transform: scale(0.9); }
-
-.music-player {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: rgba(20, 20, 28, 0.92);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(212, 165, 116, 0.3);
-  border-radius: 30px;
-  padding: 6px 10px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-  z-index: 50;
-  max-width: 260px;
-}
-
-.music-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(232, 180, 160, 0.1);
-  color: var(--rgl);
-  font-size: 0.95em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
-  border: 1px solid rgba(212, 165, 116, 0.2);
-}
-
-.music-btn:active {
-  transform: scale(0.9);
-  background: rgba(232, 180, 160, 0.3);
-}
-
-.music-play {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--wine), var(--rgd));
-  font-size: 1.1em;
-  border: 1px solid rgba(212, 165, 116, 0.4);
-}
-
-.music-name {
-  font-size: 0.7em;
-  color: var(--rg);
-  font-weight: 600;
-  padding: 0 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 90px;
+  font-family: inherit;
   cursor: pointer;
 }
 
+.grid a:hover, .grid a:active,
+.grid button:hover, .grid button:active {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(232, 180, 160, 0.3);
+}
+
+.grid a span, .grid button span {
+  font-size: 0.55em;
+  font-weight: 700;
+}
+
+/* ============ بطاقة ترحيب ============ */
 .welcome-card {
   display: flex;
   align-items: center;
@@ -639,80 +568,181 @@ input:focus, textarea:focus {
 
 .welcome-status { color: var(--mut); font-size: 0.78em; margin-top: 2px; }
 
-.content-form {
-  padding: 14px;
-  background: rgba(232, 180, 160, 0.06);
-  border-radius: 12px;
-  border: 1px solid rgba(212, 165, 116, 0.2);
-  margin-bottom: 12px;
+.logout-btn {
+  background: rgba(217, 83, 79, 0.15);
+  border: 1px solid rgba(217, 83, 79, 0.4);
+  color: #ff8a80;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  flex-shrink: 0;
 }
 
-.content-list { max-height: 200px; overflow-y: auto; margin-top: 10px; }
+.logout-btn:active {
+  transform: scale(0.9);
+  background: rgba(217, 83, 79, 0.3);
+}
 
-.content-item {
+/* ============ إخفاء/إظهار ============ */
+.hidden { display: none !important; }
+
+/* ============ شريط الحالة ============ */
+.status-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: rgba(232, 180, 160, 0.05);
-  border-radius: 10px;
-  margin-bottom: 6px;
-  font-size: 0.85em;
+  background: rgba(232, 180, 160, 0.06);
+  border: 1px solid rgba(212, 165, 116, 0.15);
+  border-radius: 12px;
+  font-size: 0.75em;
+  color: var(--mut);
+  margin-bottom: 12px;
 }
 
-.content-item .del { color: #d9534f; cursor: pointer; padding: 4px 8px; }
+.status-bar b { color: var(--rg); letter-spacing: 1px; }
 
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 6px;
-  background: rgba(232, 180, 160, 0.2);
-  border-radius: 3px;
-  outline: none;
-  margin: 8px 0;
-  padding: 0;
+/* ============ مشغل الأغاني ============ */
+.music-player {
+  position: fixed;
+  bottom: calc(var(--navbar-h) + var(--safe-bottom) + 12px);
+  right: 12px;
+  background: rgba(20, 20, 28, 0.92);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(212, 165, 116, 0.3);
+  border-radius: 30px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  z-index: 90;
+  max-width: 240px;
 }
 
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  background: linear-gradient(135deg, var(--wine), var(--rgd));
+.music-btn {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid var(--gold);
-  box-shadow: 0 2px 8px rgba(139, 46, 74, 0.5);
+  background: rgba(232, 180, 160, 0.1);
+  color: var(--rgl);
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  border: 1px solid rgba(212, 165, 116, 0.2);
 }
 
-input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+.music-play {
+  width: 38px;
+  height: 38px;
   background: linear-gradient(135deg, var(--wine), var(--rgd));
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid var(--gold);
 }
 
-.quick-chat {
+.music-name {
+  font-size: 0.65em;
+  color: var(--rg);
+  font-weight: 600;
+  padding: 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+  cursor: pointer;
+}
+
+/* ============ الدردشة ============ */
+.chat-msg {
+  animation: slideInFromBottom 0.3s ease-out;
+}
+
+.chat-action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(232, 180, 160, 0.1);
+  border: 1px solid rgba(212, 165, 116, 0.25);
+  color: var(--rgl);
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chat-action-btn:active {
+  transform: scale(0.9);
+  background: rgba(232, 180, 160, 0.25);
+}
+
+.chat-send-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--wine), var(--rgd));
+  color: white;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid rgba(212, 165, 116, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 46, 74, 0.4);
+}
+
+.chat-send-btn:active {
+  transform: scale(0.9);
+}
+
+/* ============ AI Assistant ============ */
+.ai-msg {
+  animation: fadeIn 0.3s ease-out;
+  word-wrap: break-word;
+}
+
+@keyframes slideInFromBottom {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Sub-tabs داخل التاب */
+.sub-tabs {
   display: flex;
   gap: 6px;
-  margin-top: 8px;
-  padding: 10px;
-  background: rgba(232, 180, 160, 0.06);
+  margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 6px;
+}
+
+.sub-tabs::-webkit-scrollbar { display: none; }
+
+.sub-tabs button {
+  padding: 8px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(212, 165, 116, 0.2);
-  animation: slideInRight 0.3s;
+  background: rgba(232, 180, 160, 0.08);
+  border: 1px solid rgba(212, 165, 116, 0.25);
+  font-size: 0.8em;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--mut);
+  transition: all 0.3s;
+  cursor: pointer;
 }
 
-.quick-chat input {
-  flex: 1;
-  margin: 0;
-  padding: 10px 14px;
-  font-size: 0.85em;
+.sub-tabs button.active {
+  background: linear-gradient(135deg, var(--wine), var(--rgd));
+  color: white;
+  border-color: var(--rg);
 }
-
-.quick-chat.hidden { display: none; }
 </style>
 </head>
 <body>
@@ -726,7 +756,25 @@ input[type="range"]::-moz-range-thumb {
 <script src="/content.js"></script>
 <script src="/music.js"></script>
 <script src="/sortable.js"></script>
+<script src="/js/core.js"></script>
+<script src="/js/subtabs.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/chat.js"></script>
+<script src="/js/ai.js"></script>
+<script src="/js/album.js"></script>
+<script src="/js/memories.js"></script>
+<script src="/js/messages.js"></script>
+<script src="/js/voice-msg.js"></script>
+<script src="/js/surprises.js"></script>
 <script src="/app.js"></script>
+<script src="/js/gifts.js"></script>
+<script src="/js/themes-seasonal.js"></script>
+<script src="/js/backgrounds.js"></script>
+<script src="/js/clock.js"></script>
+<script src="/js/ideas.js"></script>
+<script src="/js/goals.js"></script>
+<script src="/js/diary-shared.js"></script>
+<script src="/js/song-week.js"></script>
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');

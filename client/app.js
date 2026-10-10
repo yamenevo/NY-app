@@ -1161,3 +1161,31 @@ document.addEventListener('click', e => {
 });
 
 console.log('💎 NY v9.0 ready — with account management');
+// ============ NY App v10.0 ============
+// ملاحظة: Core.js يحتوي على معظم المنطق
+// app.js الآن مجرد نقطة بداية
+
+// تحميل الإعدادات
+if (window.NYSettings) {
+  window.NYSettings.load();
+  window.NYSettings.apply();
+}
+
+// ابدأ عند تحميل الصفحة
+window.addEventListener('load', () => {
+  console.log('🚀 NY App starting...');
+  
+  // أعد التوجيه
+  if (window.NY) {
+    window.NY.route();
+  } else {
+    console.error('❌ NY Core not loaded!');
+  }
+});
+
+// مراقبة hash للتغييرات (للصفحات الفرعية)
+window.addEventListener('hashchange', () => {
+  if (window.NY) window.NY.route();
+});
+
+console.log('💎 NY App v10.0 ready');
