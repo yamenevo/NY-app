@@ -16,14 +16,32 @@ try {
 
 const DB = process.env.DATA_FILE || path.join(__dirname, 'data.json');
 let rooms = {};
-try { rooms = JSON.parse(fs.readFileSync(DB, 'utf8')); } catch {}
+try {
+  rooms = JSON.parse(fs.readFileSync(DB, 'utf8'));
+  console.log('📂 Loaded', Object.keys(rooms).length, 'rooms from disk');
+} catch (e) {
+  console.log('📂 Starting with empty rooms');
+}
+
 let dirty = false;
 const save = () => { dirty = true; };
 setInterval(() => {
   if (!dirty) return;
   dirty = false;
-  fs.writeFile(DB, JSON.stringify(rooms), () => {});
-}, 3000);
+  fs.writeFile(DB, JSON.stringify(rooms), (err) => {
+    if (err) console.error('Save error:', err);
+  });
+}, 2000);
+
+// حفظ فوري عند الإغلاق
+process.on('SIGTERM', () => {
+  fs.writeFileSync(DB, JSON.stringify(rooms));
+  process.exit(0);
+});
+process.on('SIGINT', () => {
+  fs.writeFileSync(DB, JSON.stringify(rooms));
+  process.exit(0);
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -115,7 +133,7 @@ io.on('connection', sock => {
   };
 
   const on = (ev, fn) => sock.on(ev, d => {
-    const r = rooms[sock.data.code];
+    const r = rooms[sock.data?.code];
     if (r) fn(r, sock.data.name, d || {});
   });
 
@@ -139,27 +157,54 @@ io.on('connection', sock => {
     save();
     enter(r, name);
     cb({ room: view(r) });
+    console.log(`✨ Room created: ${code} by ${name}`);
   });
 
   // ============ الانضمام لغرفة ============
   sock.on('join', ({ code, name } = {}, cb) => {
-    const r = rooms[str(code, 9).toUpperCase()];
+    code = str(code, 9).toUpperCase();
     name = str(name, 20).trim();
-    if (!r) return cb({ error: 'الغرفة غير موجودة' });
+
     if (!name) return cb({ error: 'اكتب اسمك' });
+    if (!code) return cb({ error: 'اكتب رمز الغرفة' });
+
+    const r = rooms[code];
+    if (!r) {
+      console.log(`❌ Room not found: ${code}`);
+      return cb({ error: 'الغرفة غير موجودة. تأكد من الرمز أو اطلب من حبيبك إنشاء غرفة جديدة.' });
+    }
+
     if (!r.profiles) r.profiles = {};
     if (!r.customContent) {
       r.customContent = { activities: [], questions: [], challenges: [], love: [], poems: [] };
     }
-    if (!r.users.includes(name)) {
-      if (r.users.length >= 2) return cb({ error: 'الغرفة ممتلئة' });
+    if (!r.chat) r.chat = [];
+    if (!r.diary) r.diary = [];
+    if (!r.fights) r.fights = [];
+    if (!r.subs) r.subs = [];
+
+    // فحص إذا الاسم موجود مسبقاً
+    const existingName = r.users.includes(name);
+    
+    if (!existingName) {
+      // اسم جديد — فحص إذا الغرفة ممتلئة
+      if (r.users.length >= 2) {
+        console.log(`❌ Room full: ${code}`);
+        return cb({ error: 'الغرفة ممتلئة. لا يمكن الانضمام أكثر من شخصين.' });
+      }
       r.users.push(name);
       r.profiles[name] = { ...DEFAULT_PROFILE, name };
       save();
+      console.log(`👥 ${name} joined ${code}`);
+    } else {
+      console.log(`🔄 ${name} re-joined ${code}`);
     }
+
     if (!r.profiles[name]) {
       r.profiles[name] = { ...DEFAULT_PROFILE, name };
+      save();
     }
+
     enter(r, name);
     cb({ room: view(r) });
     sock.to(r.code).emit('toast', name + ' انضم');
@@ -322,7 +367,7 @@ io.on('connection', sock => {
     io.to(r.code).emit('content-updated', r.customContent);
   });
 
-  // ============ الدردشة السريعة ============
+  // ============ الدردشة ============
   on('chat-message', (r, me, { text }) => {
     text = str(text, 500).trim();
     if (!text) return;
@@ -335,10 +380,11 @@ io.on('connection', sock => {
     push(r, me, { title: '💬 ' + me, body: text.slice(0, 60), url: '/' });
   });
 
+  // ============ انفصال ============
   sock.on('disconnect', () => {
     if (sock.data?.code) presence(sock.data.code);
   });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`💎 NY v4 running on port ${PORT}`));
+server.listen(PORT, () => console.log(`💎 NY v10 running on port ${PORT}`));

@@ -1,4 +1,4 @@
-// ============ NY App v8.0 ============
+// ============ NY App v9.0 — Fixed & Improved ============
 const $ = s => document.querySelector(s);
 const app = $('#app');
 
@@ -33,7 +33,8 @@ const S = {
   imgs: [],
   open: false,
   currentSettingsTab: 'profile',
-  currentContentTab: 'activities'
+  currentContentTab: 'activities',
+  connecting: false
 };
 
 if (window.NYSettings) {
@@ -63,44 +64,97 @@ function toast(t) {
 }
 window.toast = toast;
 
-function playNotificationSound() {
-  if (window.NYSettings?.data?.sounds === false) return;
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.25);
-  } catch (e) {}
+// ============ Logout & Reset ============
+function logout() {
+  if (!confirm('هل تريد تسجيل الخروج؟\n\nستحتاج إدخال اسمك والغرفة مرة أخرى.')) return;
+  
+  // احتفظ بالاسم فقط
+  const savedName = S.name;
+  localStorage.clear();
+  if (savedName) localStorage.setItem('ny-saved-name', savedName);
+  
+  S.code = null;
+  S.name = null;
+  S.room = null;
+  
+  location.hash = '#/';
+  location.reload();
+}
+window.logout = logout;
+
+function changeRoom() {
+  if (!confirm('تغيير الغرفة؟\n\nستخرج من الغرفة الحالية ويمكنك الدخول لغرفة أخرى.')) return;
+  
+  // احتفظ بالاسم
+  const savedName = S.name;
+  localStorage.removeItem('code');
+  localStorage.setItem('ny-saved-name', savedName);
+  
+  S.code = null;
+  S.room = null;
+  
+  location.hash = '#/';
+  location.reload();
+}
+window.changeRoom = changeRoom;
+
+function resetAll() {
+  if (!confirm('⚠️ تحذير!\n\nسيتم حذف كل البيانات المحلية: الإعدادات، الأغاني، الترتيب، الملف الشخصي.\n\nهل أنت متأكد؟')) return;
+  if (!confirm('تأكيد أخير: سيتم حذف كل شيء!')) return;
+  
+  localStorage.clear();
+  location.hash = '#/';
+  location.reload();
+}
+window.resetAll = resetAll;
+
+// ============ Force Logout on Error ============
+function forceLogout(reason) {
+  S.code = null;
+  S.room = null;
+  localStorage.removeItem('code');
+  
+  if (reason) {
+    const savedName = S.name;
+    if (savedName) localStorage.setItem('ny-saved-name', savedName);
+  }
+  
+  location.hash = '#/';
+  route();
 }
 
-function sendChat() {
-  const input = document.getElementById('chatInput');
-  if (!input) return;
-  const text = input.value.trim();
-  if (!text) return;
-  socket.emit('chat-message', { text });
-  input.value = '';
-  toast('📤 تم الإرسال');
-}
-window.sendChat = sendChat;
-
+// ============ Socket Handlers ============
 function auth(r) {
+  S.connecting = false;
+  
   if (r.error) {
     S.room = null;
-    toast(r.error);
-    return route();
+    
+    // حفظ الاسم قبل الحذف
+    if (S.name) localStorage.setItem('ny-saved-name', S.name);
+    
+    // حذف الغرفة إذا كانت المشكلة فيها
+    if (r.error.includes('الغرفة') || r.error.includes('موجودة')) {
+      localStorage.removeItem('code');
+      S.code = null;
+    }
+    
+    toast('❌ ' + r.error);
+    
+    // العودة لشاشة الدخول
+    setTimeout(() => {
+      location.hash = '#/';
+      route();
+    }, 500);
+    
+    return;
   }
+  
   S.room = r.room;
   S.code = r.room.code;
   localStorage.code = S.code;
   localStorage.name = S.name;
+  localStorage.setItem('ny-saved-name', S.name);
 
   if (r.room.profiles && window.NYProfile) {
     const myProfile = r.room.profiles[S.name];
@@ -117,15 +171,34 @@ function auth(r) {
 
 socket.on('connect', () => {
   if (S.code && S.name) {
+    S.connecting = true;
+    route(); // اعرض شاشة الاتصال
+    
     socket.emit('join', { code: S.code, name: S.name }, r => {
-      if (r.error) {
-        S.code = null;
-        localStorage.removeItem('code');
-      }
       auth(r);
     });
+    
+    // Timeout: إذا لم يستجب السيرفر في 5 ثوان
+    setTimeout(() => {
+      if (S.connecting) {
+        S.connecting = false;
+        toast('⚠️ تعذر الاتصال. حاول مرة أخرى.');
+        forceLogout(true);
+      }
+    }, 5000);
   } else {
     route();
+  }
+});
+
+socket.on('disconnect', () => {
+  toast('⚠️ انقطع الاتصال');
+});
+
+socket.on('reconnect', () => {
+  toast('✅ عاد الاتصال');
+  if (S.code && S.name && !S.room) {
+    socket.emit('join', { code: S.code, name: S.name }, auth);
   }
 });
 
@@ -193,6 +266,35 @@ socket.on('chat-received', msg => {
   toast(`💬 ${msg.from}: ${msg.text}`);
 });
 
+// ============ Sound ============
+function playNotificationSound() {
+  if (window.NYSettings?.data?.sounds === false) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.25);
+  } catch (e) {}
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  socket.emit('chat-message', { text });
+  input.value = '';
+  toast('📤 تم الإرسال');
+}
+window.sendChat = sendChat;
+
 // ============ Header ============
 const head = (title, backUrl = '#/') => `
   <div class="hd">
@@ -207,8 +309,19 @@ function route() {
   const h = page();
 
   if (!S.room) {
-    if (S.code) {
-      app.innerHTML = '<div class="empty"><div class="empty-icon">💎</div>جاري الاتصال...</div>';
+    if (S.connecting) {
+      // شاشة اتصال مع زر إلغاء
+      app.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">💎</div>
+          <p>جاري الاتصال...</p>
+          <br>
+          <button class="btn2" style="width:auto;padding:10px 20px;margin-top:20px" 
+                  onclick="forceLogout()">
+            ❌ إلغاء والعودة
+          </button>
+        </div>
+      `;
     } else {
       login();
     }
@@ -229,6 +342,8 @@ addEventListener('hashchange', route);
 
 // ============ Login ============
 function login() {
+  const savedName = localStorage.getItem('ny-saved-name') || S.name || '';
+  
   app.innerHTML = `
     <div class="login fade-in">
       <img src="/logo.png" class="app-logo float" 
@@ -237,7 +352,7 @@ function login() {
       <p class="login-tagline">مساحتنا الخاصة</p>
       
       <input id="n" placeholder="اسمك" maxlength="20" 
-             value="${esc(S.name || '')}">
+             value="${esc(savedName)}">
       <input id="c" placeholder="رمز الغرفة NY-XXXX (للانضمام)" 
              maxlength="9" style="text-transform:uppercase">
       
@@ -264,6 +379,7 @@ function home() {
         <div class="welcome-name">${esc(myName)}</div>
         <div class="welcome-status">${esc(myProfile.status || 'أحبك')}</div>
       </div>
+      <button class="logout-btn" onclick="logout()" title="تسجيل الخروج">🚪</button>
     </div>
     
     <div class="top slide-in">
@@ -298,6 +414,9 @@ function home() {
       📖 قصة NY
     </button>
     <button class="btn2" data-a="notif">🔔 تفعيل الإشعارات</button>
+    <button class="btn2" onclick="changeRoom()" style="margin-top:6px">
+      🔄 تغيير الغرفة
+    </button>
     <button class="btn2" data-a="chatToggle" style="margin-top:6px">
       💬 دردشة سريعة
     </button>
@@ -331,7 +450,7 @@ function home() {
   }, 100);
 }
 
-// ============ About Page — قصة NY ============
+// ============ About Page ============
 function aboutPage() {
   const story = window.NYStory || {
     title: 'قصة NY',
@@ -456,6 +575,9 @@ function settingsPage() {
       </button>
       <button data-a="tab" data-tab="relationship" class="${S.currentSettingsTab === 'relationship' ? 'active' : ''}">
         💕 العلاقة
+      </button>
+      <button data-a="tab" data-tab="account" class="${S.currentSettingsTab === 'account' ? 'active' : ''}">
+        🚪 الحساب
       </button>
     </div>
     
@@ -596,13 +718,46 @@ function renderSettingsTab() {
                  style="margin:0;width:60%;padding:8px"
                  onchange="NYSettings.set('relationshipStart', this.value)">
         </div>
+      </div>
+    `;
+  }
+
+  else if (S.currentSettingsTab === 'account') {
+    content.innerHTML = `
+      <div class="settings-section fade-in">
+        <div class="card2" style="text-align:center;padding:20px;margin-bottom:16px">
+          <div style="font-size:2em;margin-bottom:10px">👤</div>
+          <div style="color:var(--rg);font-weight:700;font-size:1.1em">
+            ${esc(S.name || 'مستخدم')}
+          </div>
+          <div style="color:var(--mut);font-size:0.8em;margin-top:6px">
+            الغرفة: ${esc(S.code || '-')}
+          </div>
+        </div>
         
-        <div style="margin-top:24px;padding:16px;background:rgba(139,46,74,0.15);border-radius:12px;border:1px solid rgba(139,46,74,0.3)">
-          <div style="color:#ff8a80;font-weight:700;margin-bottom:8px">
+        <button class="btn" style="margin-bottom:10px" onclick="changeRoom()">
+          🔄 تغيير الغرفة
+        </button>
+        <div style="color:var(--mut);font-size:0.75em;margin-bottom:16px;padding:0 8px;line-height:1.6">
+          يخرجك من الغرفة الحالية ويحتفظ باسمك. يمكنك الدخول لغرفة جديدة.
+        </div>
+        
+        <button class="btn2" style="margin-bottom:10px" onclick="logout()">
+          🚪 تسجيل الخروج
+        </button>
+        <div style="color:var(--mut);font-size:0.75em;margin-bottom:16px;padding:0 8px;line-height:1.6">
+          يحذف جلستك المحلية ويعيدك لشاشة الدخول.
+        </div>
+        
+        <div style="margin-top:24px;padding:16px;background:rgba(217,83,79,0.15);border-radius:12px;border:1px solid rgba(217,83,79,0.4)">
+          <div style="color:#ff8a80;font-weight:700;margin-bottom:8px;font-size:0.95em">
             ⚠️ منطقة الخطر
           </div>
-          <button class="btn2" data-a="clearsettings">
-            🗑️ مسح كل الإعدادات
+          <div style="color:var(--mut);font-size:0.75em;margin-bottom:12px;line-height:1.6">
+            يحذف كل البيانات: الإعدادات، الملف الشخصي، الأغاني، الترتيب.
+          </div>
+          <button class="btn2" onclick="resetAll()" style="background:rgba(217,83,79,0.3);color:#ff8a80;border-color:rgba(217,83,79,0.5)">
+            🗑️ حذف كل البيانات
           </button>
         </div>
       </div>
@@ -813,6 +968,9 @@ const A = {
     if (!S.name) return toast('اكتب اسمك');
     if (window.NYSettings) window.NYSettings.set('name', S.name);
     if (window.NYProfile) window.NYProfile.set('name', S.name);
+    localStorage.setItem('ny-saved-name', S.name);
+    S.connecting = true;
+    route();
     socket.emit('create', { name: S.name }, auth);
   },
 
@@ -822,6 +980,9 @@ const A = {
     if (!S.name || !S.code) return toast('اكتب الاسم والرمز');
     if (window.NYSettings) window.NYSettings.set('name', S.name);
     if (window.NYProfile) window.NYProfile.set('name', S.name);
+    localStorage.setItem('ny-saved-name', S.name);
+    S.connecting = true;
+    route();
     socket.emit('join', { code: S.code, name: S.name }, auth);
   },
 
@@ -999,4 +1160,4 @@ document.addEventListener('click', e => {
   if (b) b.remove();
 });
 
-console.log('💎 NY v8.0 ready — with About page');
+console.log('💎 NY v9.0 ready — with account management');
